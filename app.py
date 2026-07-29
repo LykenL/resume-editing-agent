@@ -455,18 +455,23 @@ def stage2_rewrite_resume(resume_paragraphs: list, intelligence: dict, base_url:
 1. Original resume paragraphs (bullet points or skill lines)
 2. An intelligence package containing: the candidate's skills, the JD's required skills & keywords, and identified gaps
 
-Your task is to rewrite resume paragraphs to maximize their ATS match score against the job description.
+### GOAL:
+1. MAXIMIZE ATS KEYWORD MATCHING for the JD provided.
+2. ELIMINATE REASON FOR REJECTION due to keyword stuffing, fluff, or unnatural tail-ended phrase lists.
+3. MAINTAIN HIGH IMPACT using the standard formula: [Action Verb] + [Technical Method / Data Scale] + [Business Outcome / Strategic Impact].
+4. CONCISENESS (ONE-PAGE LIMIT): To keep the resume to exactly one page, your revised text MUST NOT be significantly longer than the original text. Be extremely punchy and concise.
 
-CRITICAL RULES:
-1. TRUTHFULNESS: Do NOT fabricate any experience, credential, project, tool, or metric. Only rephrase and emphasize what the candidate already has.
-2. ATS KEYWORD DENSITY: Your ultimate goal is to pass ATS. You MUST heavily integrate and intentionally repeat the JD keywords and required skills throughout the rewrites. Use exact keyword phrasing from the JD.
-3. GAP BRIDGING: For identified gaps where the candidate has *adjacent* experience, rephrase to highlight the connection.
-4. STAR METHOD: Use Situation-Task-Action-Result format for bullet points where applicable.
-5. CONCISENESS (ONE-PAGE LIMIT): To keep the resume to exactly one page, your revised text MUST NOT be significantly longer than the original text. Be extremely punchy and concise while maximizing keywords.
-6. SKILL SUBLINES (STRICT FORMATTING): If a paragraph contains a tab character (\t) or vertical bar (|), you MUST preserve the EXACT structure and formatting, including the \t character. Your ONLY job for these lines is to reorder or substitute the HARD TECHNICAL SKILLS to heavily emphasize the JD keywords.
+### TARGET JOB DESCRIPTION KEYWORDS TO INTEGRATE NATURALLY:
+(These will be provided in the INTELLIGENCE PACKAGE below. The Technical skills are the core area for keyword matching.)
+
+### STRICT RULES:
+1. TRUTHFULNESS: Do NOT invent false information, change degree titles, or alter numerical metrics (e.g., keep "Kaggle Rank #1", "47k+ observations"). Only rephrase and emphasize what the candidate already has.
+2. SHOW, DON'T TELL: Show behavioral traits (e.g., leadership, resilience, learner mindset) through concrete actions and project outcomes rather than explicitly stating the buzzwords.
+3. SKILL SUBLINES (STRICT FORMATTING): If a paragraph contains a tab character (\t) or vertical bar (|), you MUST preserve the EXACT structure and formatting, including the \t character. Your ONLY job for these lines is to reorder or substitute the HARD TECHNICAL SKILLS to heavily emphasize the JD keywords.
 - CRITICAL: Do NOT modify non-technical elements (like locations e.g. "Vancouver, Canada", or project names).
 - CRITICAL: ONLY inject HARD technical skills (tools, languages, algorithms). Do NOT inject soft skills, cultural buzzwords, or business jargon (e.g. "diversity", "coaching", "leadership"). Do NOT turn it into a sentence.
-7. ONLY include paragraphs that actually need revision. If a paragraph is already well-optimized, omit it.
+4. GAP BRIDGING: For identified gaps where the candidate has *adjacent* experience, rephrase to highlight the connection.
+5. ONLY include paragraphs that actually need revision. If a paragraph is already well-optimized, omit it.
 
 You MUST return ONLY a valid JSON object:
 {
