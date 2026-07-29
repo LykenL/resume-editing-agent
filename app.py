@@ -494,7 +494,7 @@ Return ONLY the JSON. No explanations, no markdown fences, no conversational tex
 Return ONLY the JSON object with the "mappings" array. /no_think"""
 
         batch_result = _call_evaluator_with_retries(
-            system_prompt, user_prompt, batch_label
+            system_prompt, user_prompt, batch_label, base_url
         )
         if batch_result is None:
             return None  # Abort on any batch failure
@@ -505,7 +505,7 @@ Return ONLY the JSON object with the "mappings" array. /no_think"""
 
 
 def _call_evaluator_with_retries(
-    system_prompt: str, user_prompt: str, label: str
+    system_prompt: str, user_prompt: str, label: str, base_url: str
 ) -> dict | None:
     """Call the evaluator model with retries and debug logging."""
     max_retries = 2
