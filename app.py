@@ -563,8 +563,12 @@ def _call_evaluator_with_retries(
 
 # ==================== STREAMLIT UI ====================
 
-st.title("Resume optimization Agent")
-st.caption("Two-stage AI pipeline · Qwen extracts intelligence · GPT ensures quality · Fully via Ollama")
+st.markdown("""
+<div style="text-align: center; padding-bottom: 2rem; padding-top: 1rem;">
+    <h1 style="font-size: 3rem; margin-bottom: 0.5rem;">Resume optimization Agent</h1>
+    <p style="color: #475569; font-size: 1.1rem; font-weight: 500;">Two-stage AI pipeline · Qwen extracts intelligence · GPT ensures quality · Fully via Ollama</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ---- Sidebar ----
 with st.sidebar:
