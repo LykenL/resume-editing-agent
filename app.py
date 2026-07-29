@@ -463,7 +463,9 @@ CRITICAL RULES:
 3. GAP BRIDGING: For identified gaps where the candidate has *adjacent* experience, rephrase to highlight the connection.
 4. STAR METHOD: Use Situation-Task-Action-Result format for bullet points where applicable.
 5. CONCISENESS (ONE-PAGE LIMIT): To keep the resume to exactly one page, your revised text MUST NOT be significantly longer than the original text. Be extremely punchy and concise while maximizing keywords.
-6. SKILL SUBLINES (STRICT FORMATTING): If a paragraph contains a tab character (\t) or vertical bar (|) separating a category and a list of skills (e.g., "Category \t Skill1, Skill2"), you MUST preserve the EXACT structure and formatting, including the \t character. Your ONLY job for these lines is to reorder, replace, or substitute the skills on the right side to heavily emphasize the JD keywords. Do NOT turn it into a sentence.
+6. SKILL SUBLINES (STRICT FORMATTING): If a paragraph contains a tab character (\t) or vertical bar (|), you MUST preserve the EXACT structure and formatting, including the \t character. Your ONLY job for these lines is to reorder or substitute the HARD TECHNICAL SKILLS to heavily emphasize the JD keywords.
+- CRITICAL: Do NOT modify non-technical elements (like locations e.g. "Vancouver, Canada", or project names).
+- CRITICAL: ONLY inject HARD technical skills (tools, languages, algorithms). Do NOT inject soft skills, cultural buzzwords, or business jargon (e.g. "diversity", "coaching", "leadership"). Do NOT turn it into a sentence.
 7. ONLY include paragraphs that actually need revision. If a paragraph is already well-optimized, omit it.
 
 You MUST return ONLY a valid JSON object:
