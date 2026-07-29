@@ -282,6 +282,16 @@ def _is_rewritable_paragraph(paragraph) -> bool:
     if not text or len(text) < 30:
         return False
         
+    # Exclude headers, titles, dates, contact info, and known short lines
+    if re.search(r'\d{4}\s*[-–]\s*\d{4}', text):
+        return False
+    if "jinxl" in text or "Lyken" in text or "github" in text.lower():
+        return False
+        
+    # Identify project subtitle / technical skills lines that rely on tabs
+    if '\t' in paragraph.text and ',' in text:
+        return True
+        
     # If it has a manual bullet, it's definitely a bullet point
     if text.startswith(('•', '-', '', '·', '*')):
         return True
@@ -442,17 +452,19 @@ def stage2_rewrite_resume(resume_paragraphs: list, intelligence: dict, base_url:
     Processes paragraphs in batches to avoid output truncation on long resumes.
     """
     system_prompt = """You are an expert ATS (Applicant Tracking System) optimization agent. You will receive:
-1. Original resume bullet points
+1. Original resume paragraphs (bullet points or skill lines)
 2. An intelligence package containing: the candidate's skills, the JD's required skills & keywords, and identified gaps
 
-Your task is to rewrite resume bullet points to maximize their ATS match score against the job description.
+Your task is to rewrite resume paragraphs to maximize their ATS match score against the job description.
 
 CRITICAL RULES:
-1. TRUTHFULNESS: Do NOT fabricate any experience, credential, project, tool, or metric. Only rephrase and emphasize what the candidate already has. If the candidate lacks a skill entirely, do NOT add it.
-2. KEYWORD INTEGRATION: Naturally weave in the JD keywords and required skills where the candidate has relevant experience. Use exact keyword phrasing from the JD when possible.
-3. GAP BRIDGING: For identified gaps where the candidate has *adjacent* experience, rephrase to highlight the connection. For gaps where the candidate has NO relevant experience, leave the original text unchanged.
+1. TRUTHFULNESS: Do NOT fabricate any experience, credential, project, tool, or metric. Only rephrase and emphasize what the candidate already has.
+2. ATS KEYWORD DENSITY: Your ultimate goal is to pass ATS. You MUST heavily integrate and intentionally repeat the JD keywords and required skills throughout the rewrites. Use exact keyword phrasing from the JD.
+3. GAP BRIDGING: For identified gaps where the candidate has *adjacent* experience, rephrase to highlight the connection.
 4. STAR METHOD: Use Situation-Task-Action-Result format for bullet points where applicable.
-5. ONLY include paragraphs that actually need revision. If a paragraph is already well-optimized, omit it.
+5. CONCISENESS (ONE-PAGE LIMIT): To keep the resume to exactly one page, your revised text MUST NOT be significantly longer than the original text. Be extremely punchy and concise while maximizing keywords.
+6. SKILL SUBLINES (STRICT FORMATTING): If a paragraph contains a tab character (\t) or vertical bar (|) separating a category and a list of skills (e.g., "Category \t Skill1, Skill2"), you MUST preserve the EXACT structure and formatting, including the \t character. Your ONLY job for these lines is to reorder, replace, or substitute the skills on the right side to heavily emphasize the JD keywords. Do NOT turn it into a sentence.
+7. ONLY include paragraphs that actually need revision. If a paragraph is already well-optimized, omit it.
 
 You MUST return ONLY a valid JSON object:
 {
