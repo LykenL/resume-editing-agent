@@ -24,7 +24,6 @@ bg_base64 = get_base64_image("assets/bg.jpg")
 
 # ==================== CONFIGURATION ====================
 
-OLLAMA_BASE_URL = "http://localhost:11434"
 EXECUTOR_MODEL = "qwen3.5:4b"       # Local — fast extraction & summarization
 EVALUATOR_MODEL = "gpt-oss:20b-cloud"  # Cloud — quality final rewrite
 
@@ -104,11 +103,11 @@ st.markdown(f"""
 
 # ==================== OLLAMA HELPERS ====================
 
-def check_ollama_status() -> dict:
+def check_ollama_status(base_url: str) -> dict:
     """Check if Ollama is running and which required models are available."""
     status = {"online": False, "models": {}}
     try:
-        resp = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=5)
+        resp = requests.get(f"{base_url}/api/tags", timeout=5)
         if resp.status_code == 200:
             status["online"] = True
             available = [m["name"] for m in resp.json().get("models", [])]
@@ -125,6 +124,7 @@ def check_ollama_status() -> dict:
 def ollama_chat(
     model: str,
     messages: list,
+    base_url: str,
     temperature: float = 0.3,
     max_tokens: int = 4096,
     think: bool | None = None,
@@ -150,7 +150,7 @@ def ollama_chat(
         payload["think"] = think
 
     response = requests.post(
-        f"{OLLAMA_BASE_URL}/api/chat",
+        f"{base_url}/api/chat",
         json=payload,
         timeout=180,
     )
@@ -206,7 +206,7 @@ def extract_json_from_text(text: str) -> dict | None:
 
 # ==================== DOCUMENT HELPERS ====================
 
-def extract_text_from_jd_url(url: str) -> str:
+def extract_text_from_jd_url(url: str, base_url: str) -> str:
     """Scrapes raw text from a Job Description URL, with aggressive noise removal."""
     try:
         headers = {
@@ -251,12 +251,12 @@ def extract_text_from_jd_url(url: str) -> str:
             raw_text = "\n".join(line for line in lines if line)
 
         # Use Qwen to extract just the JD from noisy scraped text
-        return _clean_jd_with_llm(raw_text[:8000])
+        return _clean_jd_with_llm(raw_text[:8000], base_url)
     except Exception as e:
         return f"Error parsing URL: {str(e)}"
 
 
-def _clean_jd_with_llm(raw_text: str) -> str:
+def _clean_jd_with_llm(raw_text: str, base_url: str) -> str:
     """Use Qwen3.5:4b to extract the actual job description from noisy scraped text."""
     try:
         cleaned = ollama_chat(
@@ -265,6 +265,7 @@ def _clean_jd_with_llm(raw_text: str) -> str:
                 {"role": "system", "content": "You extract job descriptions from noisy web page text. Return ONLY the cleaned job description content — job title, company, responsibilities, requirements, qualifications, and benefits. Remove all navigation text, login prompts, ads, and UI elements. Do not add commentary."},
                 {"role": "user", "content": f"Extract the job description from this scraped web page:\n\n{raw_text}\n\n/no_think"},
             ],
+            base_url=base_url,
             temperature=0.1,
             max_tokens=3072,
             think=False,
@@ -374,7 +375,7 @@ def apply_revisions_to_docx(original_docx_file, mapping_dict: dict) -> io.BytesI
 
 # ==================== STAGE 1: EXECUTOR (Qwen3.5:4b) ====================
 
-def stage1_extract_intelligence(resume_paragraphs: list, job_description: str) -> dict | None:
+def stage1_extract_intelligence(resume_paragraphs: list, job_description: str, base_url: str) -> dict | None:
     """
     Stage 1 — Local Executor (Qwen3.5:4b)
     Extracts structured intelligence from the resume and JD:
@@ -411,6 +412,7 @@ Respond with ONLY the JSON object, no other text. /no_think"""
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
+                base_url=base_url,
                 temperature=0.1,
                 max_tokens=3072,
                 think=False,
@@ -433,7 +435,7 @@ Respond with ONLY the JSON object, no other text. /no_think"""
 
 # ==================== STAGE 2: EVALUATOR (gpt-oss:20b-cloud) ====================
 
-def stage2_rewrite_resume(resume_paragraphs: list, intelligence: dict) -> dict | None:
+def stage2_rewrite_resume(resume_paragraphs: list, intelligence: dict, base_url: str) -> dict | None:
     """
     Stage 2 — Cloud Evaluator (gpt-oss:20b-cloud)
     Uses the intelligence from Stage 1 to produce high-quality ATS-optimized rewrites.
@@ -515,6 +517,7 @@ def _call_evaluator_with_retries(
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
+                base_url=base_url,
                 temperature=0.2,
                 max_tokens=8192,
                 think=False,
@@ -573,8 +576,10 @@ st.markdown("""
 # ---- Sidebar ----
 with st.sidebar:
     st.header("System Status")
+    
+    ollama_url = st.text_input("Ollama Server URL", value="http://localhost:11434", help="If deploying to Streamlit Cloud, use Ngrok to expose your local Ollama port (e.g. https://xxxx.ngrok-free.app)")
 
-    ollama_status = check_ollama_status()
+    ollama_status = check_ollama_status(ollama_url)
 
     if ollama_status["online"]:
         st.success("🟢 Ollama is running")
@@ -622,7 +627,7 @@ with col2:
         jd_url = st.text_input("Enter Job Description Link (e.g., LinkedIn, Greenhouse, Indeed)")
         if jd_url:
             with st.spinner("Scraping Job Description..."):
-                job_description_text = extract_text_from_jd_url(jd_url)
+                job_description_text = extract_text_from_jd_url(jd_url, ollama_url)
                 if "Error" in job_description_text:
                     st.error(job_description_text)
                     job_description_text = ""
@@ -651,7 +656,7 @@ if st.button("🚀 Optimize My Resume for ATS Screening", use_container_width=Tr
         # Step 2: Stage 1 — Executor
         with st.status("Stage 1: Analyzing resume & JD with Qwen...", expanded=True) as status1:
             st.write(f"Sending {len(paragraphs)} resume paragraphs + JD to `Qwen`...")
-            intelligence = stage1_extract_intelligence(paragraphs, job_description_text)
+            intelligence = stage1_extract_intelligence(paragraphs, job_description_text, ollama_url)
 
             if intelligence:
                 status1.update(label="Stage 1 Complete: Intelligence extracted", state="complete")
@@ -685,7 +690,7 @@ if st.button("🚀 Optimize My Resume for ATS Screening", use_container_width=Tr
         # Step 3: Stage 2 — Evaluator
         with st.status("Stage 2: Rewriting with GPT evaluator...", expanded=True) as status2:
             st.write(f"Sending intelligence + paragraphs to `GPT` for quality rewrite...")
-            optimizer_response = stage2_rewrite_resume(paragraphs, intelligence)
+            optimizer_response = stage2_rewrite_resume(paragraphs, intelligence, ollama_url)
 
             if optimizer_response and "mappings" in optimizer_response:
                 status2.update(label="Stage 2 Complete: Resume optimized", state="complete")
